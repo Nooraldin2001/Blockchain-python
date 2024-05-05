@@ -22,12 +22,15 @@
             <div class="collapse navbar-collapse">
                 <ul class="navbar-nav ml-auto">
                     <li class="nav-item active">
-                        <a href="/" class="nav-link">Wallet Generator</a>
+                        <!-- Here we will allow the user to generate a new wallet for his Images  --> 
+                        <a href="/" class="nav-link">Image Register</a>
                     </li>
                     <li class="nav-item">
-                        <a href="/make/transaction" class="nav-link">Make Transaction</a>
+                        <!-- Here we will create a new Image --> 
+                        <a href="/make/transaction" class="nav-link">Wallet Generator</a>
                     </li>
                     <li class="nav-item">
+                        <!-- Here the user could view his images transactions --> 
                         <a href="/view/transactions" class="nav-link">View Transactions</a>
                     </li>
                 </ul>
@@ -40,8 +43,6 @@
             <div class="col-lg-12 text-center">
                 <div class="card-body">
                     <h4 class="card-title">Wallet Generator</h4>
-                    <p class="card-text">Click on the button below to generate your blockchain wallet</p>
-                    <input type="button" class="btn btn-primary btn-lg" value="Generate Wallet">
                 </div>
             </div>
         </div>
@@ -49,19 +50,48 @@
 
     <div class="container">
         <div class="row">
-          <label class="col-sm-2">Public Key:</label>
-          <div class="col-sm-10">
-            <textarea id="public_key" rows="5" class="form-control" readonly></textarea>
-          </div>
-        </div>
+            <label class="col-sm-2">Owner ID:</label>
+            <div class="col-sm-10">
+                <input type="text" id="owner_id" class="form-control" placeholder="Enter Owner ID">
+            </div>
+        </div>                 
 
         <br>
 
         <div class="row">
-          <label class="col-sm-2">Private Key:</label>
-          <div class="col-sm-10">
-            <textarea id="private_key" rows="5" class="form-control" readonly></textarea>
+            <label class="col-sm-2">Upload Image:</label>
+            <div class="col-sm-10">
+                <input type="file" id="image_upload" class="form-control" accept="image/*">
+            </div>
+        </div>        
+
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <div class="card-body d-flex align-items-center justify-content-center">
+                        <p class="card-text m-0 mr-3">Click on the button below to register your image to the blockchain</p>
+                        <input type="button" id="register_image" class="btn btn-primary btn-lg" value="Register an Image">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <br>
+
+        <div class="row">
+            <label class="col-sm-2">Image Hash:</label>
+            <div class="col-sm-10">
+              <textarea id="image_hash" rows="5" class="form-control" readonly></textarea>
+            </div>
           </div>
+  
+          <br>
+  
+        <div class="row">
+            <label class="col-sm-2">Features Hash Key:</label>
+            <div class="col-sm-10">
+              <textarea id="features_hash" rows="5" class="form-control" readonly></textarea>
+            </div>
         </div>
 
         <br>
@@ -80,9 +110,6 @@
 
     </div>
 
-
-
-
     <script src="/static/vendor/jquery/jquery.min.js"></script>
     <script src="/static/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="/static/vendor/DataTables/js/datatables.min.js"></script>
@@ -90,14 +117,22 @@
 
     <script>
         $(function() {
-            $('input').click(function() {
+            $('#register_image').click(function() {
+                var owner_id = $('#owner_id').val();
+                var image_file = $('#image_upload').prop('files')[0];
+                var form_data = new FormData();
+                form_data.append('owner_id', owner_id);
+                form_data.append('image', image_file);
 
                 $.ajax({
-                    url: '/wallet/new',
-                    type: 'GET',
+                    url: '/register_image',
+                    type: 'POST',
+                    data: form_data,
+                    processData: false,
+                    contentType: false,
                     success: function(response) {
-                        document.getElementById("public_key").innerHTML = response['public_key'];
-                        document.getElementById("private_key").innerHTML = response['private_key'];
+                        document.getElementById("image_hash").innerHTML = response['image_hash'];
+                        document.getElementById("features_hash").innerHTML = response['features_hash'];
                         document.getElementById("warning").style.display = "block";
                     },
                     error: function(error) {

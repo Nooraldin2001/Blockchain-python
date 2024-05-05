@@ -198,8 +198,9 @@
                 $.ajax({
                     url: "/generate/transaction",
                     type: "POST",
+                    contentType: "application/json",
                     dataType: 'json',
-                    data: $('#transaction_form').serialize(),
+                    data: JSON.stringify($('#transaction_form').serializeArray()),
                     success: function(response) {
                         document.getElementById('confirmation_sender_public_key').value = response['transaction']['sender_public_key'];
                         document.getElementById('confirmation_recipient_public_key').value = response['transaction']['recipient_public_key'];
