@@ -12,75 +12,99 @@
     <link rel="stylesheet" href="/static/vendor/font-awesome/font-awesome.min.css">
     <link rel="stylesheet" href="/static/css/custom.css">
 
+    <style>
+        /* Custom purple color palette */
+        .navbar-dark {
+            background-color: #6a0dad; /* Purple */
+        }
+
+        .navbar-dark .navbar-nav .nav-link {
+            color: #ffffff; /* White */
+        }
+
+        .btn-primary {
+            background-color: #6a0dad; /* Purple */
+            border-color: #6a0dad; /* Purple */
+        }
+
+        .btn-primary:hover {
+            background-color: #7d27b8; /* Lighter purple */
+            border-color: #7d27b8; /* Lighter purple */
+        }
+
+        .alert-danger {
+            background-color: #a74ec0; /* Light purple */
+            border-color: #a74ec0; /* Light purple */
+            color: #ffffff; /* White */
+        }
+    </style>
 </head>
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
-        <div class="container">
-            <a href="#" class="navbar-brand">Blockchain Client</a>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <div class="container">
+        <a href="#" class="navbar-brand">Blockchain Client</a>
 
-            <div class="collapse navbar-collapse">
-                <ul class="navbar-nav ml-auto">
-                    <li class="nav-item active">
-                        <a href="/" class="nav-link">Wallet Generator</a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="/rigester/img" class="nav-link">Register Transaction</a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="/view/transactions" class="nav-link">View Transactions</a>
-                    </li>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item active">
+                    <a href="/" class="nav-link">Wallet Generator</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/rigester/img" class="nav-link">Register Transaction</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/view/transactions" class="nav-link">View Transactions</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12 text-center">
+            <div class="card-body">
+                <h4 class="card-title">Wallet Generator</h4>
+                <p class="card-text">Click on the button below to generate your blockchain wallet</p>
+                <input type="button" class="btn btn-primary btn-lg" value="Generate Wallet">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <label class="col-sm-2">Public Key:</label>
+        <div class="col-sm-10">
+            <textarea id="public_key" rows="5" class="form-control" readonly></textarea>
+        </div>
+    </div>
+
+    <br>
+
+    <div class="row">
+        <label class="col-sm-2">Private Key:</label>
+        <div class="col-sm-10">
+            <textarea id="private_key" rows="5" class="form-control" readonly></textarea>
+        </div>
+    </div>
+
+    <br>
+
+    <div class="row" id="warning" style="display:none">
+        <div class="col-sm-12">
+            <div class="alert alert-danger" role="alert">
+                IMPORTANT
+                <ul>
+                    <li>Save your private and public keys. These keys cannot be recovered!</li>
+                    <li>Don't share your private key with anyone!</li>
                 </ul>
             </div>
         </div>
-    </nav>
-
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-12 text-center">
-                <div class="card-body">
-                    <h4 class="card-title">Wallet Generator</h4>
-                    <p class="card-text">Click on the button below to generate your blockchain wallet</p>
-                    <input type="button" class="btn btn-primary btn-lg" value="Generate Wallet">
-                </div>
-            </div>
-        </div>
     </div>
 
-    <div class="container">
-        <div class="row">
-          <label class="col-sm-2">Public Key:</label>
-          <div class="col-sm-10">
-            <textarea id="public_key" rows="5" class="form-control" readonly></textarea>
-          </div>
-        </div>
-
-        <br>
-
-        <div class="row">
-          <label class="col-sm-2">Private Key:</label>
-          <div class="col-sm-10">
-            <textarea id="private_key" rows="5" class="form-control" readonly></textarea>
-          </div>
-        </div>
-
-        <br>
-
-        <div class="row" id="warning" style="display:none">
-          <div class="col-sm-12">
-            <div class="alert alert-danger" role="alert">
-              IMPORTANT
-              <ul>
-                <li>Save you private and public keys. These keys cannot be recovered!</li>
-                <li>Don't share your private key with anyone!</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-
-    </div>
-
-
+</div>
 
 
     <script src="/static/vendor/jquery/jquery.min.js"></script>

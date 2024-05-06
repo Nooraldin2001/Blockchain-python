@@ -100,6 +100,7 @@ def image_serialize(image_path):
 
 def get_hash_key(data):
     hash_object = hashlib.sha256(data.encode())
+    print(hash_object)
     return hash_object.hexdigest()
 
 @app.route('/register_image', methods=['POST'])
@@ -110,7 +111,7 @@ def register_image():
     # Save the image file to the "imgs" folder
     if image_file:
 
-        filename = secure_filename(image_file.filename)
+        filename =  secure_filename(image_file.filename)
         image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         image_file.save(image_path)
 

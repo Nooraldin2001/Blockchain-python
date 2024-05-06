@@ -51,10 +51,67 @@ class Blockchain:
         self.chain.append(block)
         return block
 
-    def verify_transaction_signature(self, owner_id, image_hash, signature,):
-        print(owner_id)
 
-        return True
+    def check_image_A(self, hf, hi):
+        print("check_image_A")
+        print(self.chain)
+        found_hf = False
+        found_hi = False
+        
+        for block in self.chain:
+            print(block)
+            if block['amount'] == hf:
+                found_hf = True
+                if block['recipient_public_key'] == hi:
+                    found_hi = True
+                    break
+
+        if found_hf == True:
+            if found_hi == True:
+                # Case A: Test image is identical to original
+                return ["Identical", {"image_hash": hi, "features_hash": hf}]
+            else:
+                # Case B: Test image is derived from original
+                return self.check_image_B(hi, hf)
+        else:
+            print("not found")
+            return True
+        
+    def knnMatch(self, orig_features, im_features, k):
+        # Implement KNN matching logic
+        pass
+
+    def calc_match_ratio(self, pts, num_orig_features):
+        # Implement matching ratio calculation logic
+        pass
+
+
+
+
+    def check_image_B(self, hi, hf):
+
+        pass 
+        features = hf
+        im_hash = hi
+
+        for entry in self.chain:
+            orig_features = entry[2]
+            orig_hash = entry[1]
+
+            pts = self.knnMatch(orig_features, features, k=2)
+            match_ratio = self.calc_match_ratio(pts, len(orig_features))
+
+            if match_ratio >= Threshold:
+                return ["Derived", {"image_hash": orig_hash, "features_hash": orig_features}]
+
+        return ["Not Found", None]
+    
+
+    def verify_transaction_signature(self, owner_id, image_hash, features_hash):
+        print(owner_id)
+        if self.check_image_A(features_hash, image_hash) == True:
+            return True
+    
         # public_key = RSA.importKey(binascii.unhexlify(sender_public_key))
         # verifier = PKCS1_v1_5.new(public_key)
         # h = SHA.new(str(transaction).encode('utf8'))
@@ -63,6 +120,9 @@ class Blockchain:
         #     return True
         # except ValueError:
         #     return False
+
+    
+    
 
     @staticmethod
     def valid_proof(transactions, last_hash, nonce, difficulty=MINING_DIFFICULTY):
@@ -111,24 +171,24 @@ class Blockchain:
         return False
 
     def valid_chain(self, chain):
-        last_block = chain[0]
-        current_index = 1
+        # last_block = chain[0]
+        # current_index = 1
 
-        while current_index < len(chain):
-            block = chain[current_index]
-            if block['previous_hash'] != self.hash(last_block):
-                return False
+        # while current_index < len(chain):
+        #     block = chain[current_index]
+        #     if block['previous_hash'] != self.hash(last_block):
+        #         return False
 
-            transactions = block['transactions'][:-1]
-            transaction_elements = ['sender_public_key', 'recipient_public_key', 'amount']
-            transactions = [OrderedDict((k, transaction[k]) for k in transaction_elements) for transaction in
-                            transactions]
+        #     transactions = block['transactions'][:-1]
+        #     transaction_elements = ['sender_public_key', 'recipient_public_key', 'amount']
+        #     transactions = [OrderedDict((k, transaction[k]) for k in transaction_elements) for transaction in
+        #                     transactions]
 
-            if not self.valid_proof(transactions, block['previous_hash'], block['nonce'], MINING_DIFFICULTY):
-                return False
+        #     if not self.valid_proof(transactions, block['previous_hash'], block['nonce'], MINING_DIFFICULTY):
+        #         return False
 
-            last_block = block
-            current_index += 1
+        #     last_block = block
+        #     current_index += 1
 
         return True
 
@@ -136,6 +196,7 @@ class Blockchain:
         transaction = OrderedDict({
             'sender_public_key': owner_id,
             'recipient_public_key': image_hash,
+            'amount': features_hash,
         })
 
         # Reward for mining a block
