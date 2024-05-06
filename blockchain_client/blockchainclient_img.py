@@ -11,22 +11,57 @@ from Crypto.Hash import SHA
 import cv2 as cv
 import json
 import os 
+import requests
 
 
-
-class Blockchain:
-    def __init__(self):
-        self.chain = []
-
-    def add_to_blockchain(self, entry):
-        self.chain.append(entry)
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = 'imgs'
+app.config['UPLOAD_FOLDER'] = 'C:\\Noor_work\\4th_y_term_2\\blockchain\\venv\\src\\blockchain_client\\imgs'
 
 @app.route('/')
 def index():
+    return render_template('index.html')
+
+@app.route('/view/transactions')
+def view_transactions():
+    return render_template('view_transactions.html')
+
+@app.route('/rigester/img')
+def make_transaction():
     return render_template('rigester_img.html')
+
+@app.route('/wallet/new')
+def new_wallet():
+    random_gen = Crypto.Random.new().read
+    private_key = RSA.generate(1024, random_gen)
+    public_key = private_key.publickey()
+
+    response = {
+        'private_key': binascii.hexlify(private_key.export_key(format('DER'))).decode('ascii'),
+        'public_key': binascii.hexlify(public_key.export_key(format('DER'))).decode('ascii')
+    }
+
+    return jsonify(response), 200
+
+@app.route('/transactions/new', methods=['POST'])
+def new_transaction():
+    values = request.data
+    print(values)
+    required = ['confirmation_image_hash', 'confirmation_features_hash', 'confirmation_sender_public_key']
+    # if not all(k in values for k in required):
+    #     return 'Missing values', 400
+
+    # transaction_results = blockchain.submit_transaction(values['confirmation_image_hash'],
+    #                                                     values['confirmation_features_hash'],
+    #                                                     values['confirmation_sender_public_key'])
+    # if transaction_results == False:
+    #     response = {'message': 'Invalid transaction/signature'}
+    #     return jsonify(response), 406
+    # else:
+    response = {'message': 'Transaction will be added to the Block '}
+    
+    return jsonify(response), 200
+
 
 def get_surf_features(image):
     #importing the img and converting it to grayscale 
@@ -80,8 +115,8 @@ def register_image():
         image_file.save(image_path)
 
         # Process the image using the insert_image function
-        blockchain = Blockchain()
-        hi, hf = insert_image(image_path, owner_id, blockchain)
+        #blockchain = Blockchain()
+        hi, hf = insert_image(image_path, owner_id)
 
         return jsonify({
             'image_hash': hi,  # Replace with the actual public key
@@ -91,24 +126,13 @@ def register_image():
     return jsonify({'error': 'No image file provided'})
 
 
-def insert_image(image, owner_id, blockchain):
+def insert_image(image, owner_id):
     features = get_surf_features(image)
     hf = get_hash_key(features)
     hi = get_hash_key(image_serialize(image))
     entry = [hf, hi, features, owner_id]
-    blockchain.add_to_blockchain(entry)
+    #blockchain.add_to_blockchain(entry)
     return hi, hf
-
-def new_wallet():
-    random_gen = Crypto.Random.new().read
-    private_key = RSA.generate(1024, random_gen)
-    public_key = private_key.publickey()
-
-    response = {
-        #'private_key': binascii.hexlify(private_key.export_key(format('DER'))).decode('ascii'),
-        'public_key': binascii.hexlify(public_key.export_key(format('DER'))).decode('ascii')
-    }
-    return response['public_key']
 
 if __name__ == '__main__':
     # print("Image Hash Key:", hi)

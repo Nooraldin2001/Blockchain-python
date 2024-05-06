@@ -16,9 +16,7 @@ MINING_SENDER = "The Blockchain"
 MINING_REWARD = 1
 MINING_DIFFICULTY = 2
 
-
 class Blockchain:
-
     def __init__(self):
         self.transactions = []
         self.chain = []
@@ -37,32 +35,25 @@ class Blockchain:
             raise ValueError('Invalid URL')
 
     def create_block(self, nonce, previous_hash):
-        """
-        Add a block of transactions to the blockchain
-        """
         block = {'block_number': len(self.chain) + 1,
                  'timestamp': time(),
                  'transactions': self.transactions,
                  'nonce': nonce,
                  'previous_hash': previous_hash}
-
         # Reset the current list of transactions
         self.transactions = []
         self.chain.append(block)
         return block
 
-    def verify_transaction_signature(self, owner_id, image_hash, signature,):
-        print(owner_id)
-
-        return True
-        # public_key = RSA.importKey(binascii.unhexlify(sender_public_key))
-        # verifier = PKCS1_v1_5.new(public_key)
-        # h = SHA.new(str(transaction).encode('utf8'))
-        # try:
-        #     verifier.verify(h, binascii.unhexlify(signature))
-        #     return True
-        # except ValueError:
-        #     return False
+    def verify_transaction_signature(self, sender_public_key, signature, transaction):
+        public_key = RSA.importKey(binascii.unhexlify(sender_public_key))
+        verifier = PKCS1_v1_5.new(public_key)
+        h = SHA.new(str(transaction).encode('utf8'))
+        try:
+            verifier.verify(h, binascii.unhexlify(signature))
+            return True
+        except ValueError:
+            return False
 
     @staticmethod
     def valid_proof(transactions, last_hash, nonce, difficulty=MINING_DIFFICULTY):
@@ -78,12 +69,10 @@ class Blockchain:
         nonce = 0
         while self.valid_proof(self.transactions, last_hash, nonce) is False:
             nonce += 1
-
         return nonce
 
     @staticmethod
     def hash(block):
-        # We must to ensure that the Dictionary is ordered, otherwise we'll get inconsistent hashes
         block_string = json.dumps(block, sort_keys=True).encode('utf8')
         h = hashlib.new('sha256')
         h.update(block_string)
@@ -92,91 +81,69 @@ class Blockchain:
     def resolve_conflicts(self):
         neighbours = self.nodes
         new_chain = None
-
         max_length = len(self.chain)
         for node in neighbours:
             response = requests.get('http://' + node + '/chain')
             if response.status_code == 200:
                 length = response.json()['length']
                 chain = response.json()['chain']
-
                 if length > max_length and self.valid_chain(chain):
                     max_length = length
                     new_chain = chain
-
         if new_chain:
             self.chain = new_chain
             return True
-
         return False
 
     def valid_chain(self, chain):
         last_block = chain[0]
         current_index = 1
-
         while current_index < len(chain):
             block = chain[current_index]
             if block['previous_hash'] != self.hash(last_block):
                 return False
-
             transactions = block['transactions'][:-1]
             transaction_elements = ['sender_public_key', 'recipient_public_key', 'amount']
-            transactions = [OrderedDict((k, transaction[k]) for k in transaction_elements) for transaction in
-                            transactions]
-
+            transactions = [OrderedDict((k, transaction[k]) for k in transaction_elements) for transaction in transactions]
             if not self.valid_proof(transactions, block['previous_hash'], block['nonce'], MINING_DIFFICULTY):
                 return False
-
             last_block = block
             current_index += 1
-
         return True
 
-    def submit_transaction(self, owner_id, image_hash, features_hash):
+    def submit_transaction(self, sender_public_key, recipient_public_key, signature, amount):
         transaction = OrderedDict({
-            'sender_public_key': owner_id,
-            'recipient_public_key': image_hash,
+            'sender_public_key': sender_public_key,
+            'recipient_public_key': recipient_public_key,
+            'amount': amount
         })
-
         # Reward for mining a block
-        if owner_id == MINING_SENDER:
+        if sender_public_key == MINING_SENDER:
             self.transactions.append(transaction)
             return len(self.chain) + 1
         else:
             # Transaction from wallet to another wallet
-            print("verfy")
-            signature_verification = self.verify_transaction_signature(owner_id, features_hash, transaction)
-            if signature_verification == True:
+            signature_verification = self.verify_transaction_signature(sender_public_key, signature, transaction)
+            if signature_verification:
                 self.transactions.append(transaction)
                 return len(self.chain) + 1
             else:
                 return False
-
 
 # Instantiate the Blockchain
 blockchain = Blockchain()
 
 # Instantiate the Node
 app = Flask(__name__)
-CORS(app, origins='*')
-
+CORS(app)
 
 @app.route('/')
 def index():
     return render_template('./index.html')
 
-
 @app.route('/configure')
 def configure():
     return render_template('./configure.html')
-
-
-@app.route('/transactions/get', methods=['GET'])
-def get_transactions():
-    transactions = blockchain.transactions
-    response = {'transactions': transactions}
-    return jsonify(response), 200
-
 
 @app.route('/chain', methods=['GET'])
 def get_chain():
@@ -184,50 +151,7 @@ def get_chain():
         'chain': blockchain.chain,
         'length': len(blockchain.chain)
     }
-
     return jsonify(response), 200
-
-
-@app.route('/mine', methods=['GET'])
-def mine():
-    # We run the proof of work algorithm
-    nonce = blockchain.proof_of_work()
-
-    blockchain.submit_transaction(owner_id=MINING_SENDER,
-                                  image_hash=blockchain.node_id,
-                                  features_hash='')
-
-    last_block = blockchain.chain[-1]
-    previous_hash = blockchain.hash(last_block)
-    block = blockchain.create_block(nonce, previous_hash)
-
-    response = {
-        'message': 'New block created',
-        'block_number': block['block_number'],
-        'transactions': block['transactions'],
-        'nonce': block['nonce'],
-        'previous_hash': block['previous_hash'],
-    }
-    return jsonify(response), 200
-
-
-@app.route('/transactions/new', methods=['POST'])
-def new_transaction():
-    values = request.data
-    value_json = json.loads(values)
-    transaction_results = blockchain.submit_transaction(value_json['owner_id'],
-                                                        value_json['image_hash'],
-                                                        value_json['features_hash'])
-    
-    print('this the transaction result: ',transaction_results)
-    if transaction_results == False:
-        response = {'message': 'Invalid transaction/signature'}
-        return jsonify(response), 406
-    response = {'message': 'Transaction will be added to the Block '}
-
-    print('new Transaction')
-    return jsonify(response), 201
-
 
 @app.route('/nodes/get', methods=['GET'])
 def get_nodes():
@@ -235,11 +159,9 @@ def get_nodes():
     response = {'nodes': nodes}
     return jsonify(response), 200
 
-
 @app.route('/nodes/resolve', methods=['GET'])
 def consensus():
     replaced = blockchain.resolve_conflicts()
-
     if replaced:
         response = {
             'message': 'Our chain was replaced',
@@ -252,32 +174,24 @@ def consensus():
         }
     return jsonify(response), 200
 
-
 @app.route('/nodes/register', methods=['POST'])
 def register_node():
     values = request.form
-    # 127.0.0.1:5002,127.0.0.1:5003, 127.0.0.1:5004
     nodes = values.get('nodes').replace(' ', '').split(',')
-
     if nodes is None:
         return 'Error: Please supply a valid list of nodes', 400
-
     for node in nodes:
         blockchain.register_node(node)
-
     response = {
         'message': 'Nodes have been added',
         'total_nodes': [node for node in blockchain.nodes]
     }
     return jsonify(response), 200
 
-
 if __name__ == '__main__':
     from argparse import ArgumentParser
-
     parser = ArgumentParser()
     parser.add_argument('-p', '--port', default=5001, type=int, help="port to listen to")
     args = parser.parse_args()
     port = args.port
-
     app.run(host='127.0.0.1', port=port, debug=True)
